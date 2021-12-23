@@ -1,14 +1,16 @@
-#!/bin/bash
-
+#!/bin/sh
 set -eu
 
+INPUT_DRY=${INPUT_DRY:-false}
+INPUT_VERBOSE=${INPUT_VERBOSE:-false}
+
+# Misc generated settings
 AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID:-}
 AWS_REGION=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}
+CONFIG=$(mktemp)
+LOG_LEVEL=info
+SYNC_ACTION=once
 
-ecr_login(){
-  echo '::debug::Logging into AWS ECR...'
-  aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-}
 
 main() {
     local OLD_IMAGE_NAME NEW_IMAGE_NAME
@@ -20,7 +22,12 @@ main() {
         local AWS_ACCOUNT_ID AWS_REGION
         AWS_ACCOUNT_ID=$(echo "${INPUT_IMAGE}" | cut -d. -f1)
         AWS_REGION=$(echo "${INPUT_IMAGE}" | cut -d. -f4)
-        ecr_login
+
+         # Populate the docker config file with our credhelper locations...
+         mkdir -p $HOME/.docker
+         cat << EOF > $HOME/.docker/config.json
+{"auths" : {}, "credHelpers" : { "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com" : "ecr-login" } }
+EOF
     fi
 
     # Sanitize the INPUT_DEST_TAG. If the tag looks like a github reference
@@ -32,19 +39,34 @@ main() {
     OLD_IMAGE_NAME="${INPUT_IMAGE}:${INPUT_SOURCE_TAG}"
     NEW_IMAGE_NAME="${INPUT_IMAGE}:${INPUT_DEST_TAG}"
 
+    # Prepare the regsync config file for a one-time sync.
+    cat << EOF > ${CONFIG}
+version: 1
+defaults:
+parallel: 10
+rateLimit:
+  min: 100
+  retry: 1m
+sync:
+- source: ${OLD_IMAGE_NAME}
+  type: image
+  target: ${NEW_IMAGE_NAME}
+EOF
+    [ "${INPUT_VERBOSE}" == true ] && cat ${CONFIG}
+
     echo "Pulling ${OLD_IMAGE_NAME} and retagging it as ${NEW_IMAGE_NAME}..."
-    docker pull "${OLD_IMAGE_NAME}"
-    docker tag "${OLD_IMAGE_NAME}" "${NEW_IMAGE_NAME}"
-
-    [ "${INPUT_DRY}" == 'true' ] && return 0
-
-    echo "Pushing ${NEW_IMAGE_NAME}..."
-    docker push "${NEW_IMAGE_NAME}"
+    regsync ${SYNC_ACTION} --verbosity ${LOG_LEVEL} -c ${CONFIG}
+    echo "Done!!"
 }
 
 # Be really loud and verbose if we're running in VERBOSE mode
 if [ "${INPUT_VERBOSE}" == "true" ]; then
   set -x
+  LOG_LEVEL="debug"
+fi
+
+if [ "${INPUT_DRY}" == "true" ]; then
+  SYNC_ACTION=check
 fi
 
 main
