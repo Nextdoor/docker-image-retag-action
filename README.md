@@ -22,8 +22,10 @@ _There is specifically no `docker build ...` code in this action on purpose._
    good.
 4. Developer tags (or uses a Github Release) `$SHA` in Git repository as
    `v1.2.3`
-5. This action is triggered to `docker pull myapp:test-$SHA && docker tag ...
-   && docker push`
+5. This action is triggered which uses the
+   [regsync](https://github.com/regclient/regclient) tool to re-tag the release
+   with your target tag and push that up. Using `regsync` ensures that we are
+   multi-arch compatible, and we only pull down the necessary bits.
 
 ## Usage
 
@@ -92,3 +94,19 @@ push that image.
 If your `image` value points to an AWS ECR repository, then the action will
 automatically log into AWS on your behalf. It expects that you will set the
 `AWS_ACCES_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
+
+# Development Notes
+
+To test out this function, you need to log into your own ECR repository and
+pass the credentials into the Docker image. Here's an example of doing it
+locally with an `$HOME/.aws/credentials` file in place:
+
+    $ docker build . -t myimage && \
+      docker run \
+        --volume $HOME/.aws:/home/appuser/.aws \
+        --env INPUT_IMAGE=111111111111.dkr.ecr.us-west-2.amazonaws.com/myorg/myimage \
+        --env INPUT_SOURCE_TAG=latest \
+        --env INPUT_DEST_TAG=foobar \
+        --env AWS_PROFILE=eng \
+        --env INPUT_DRY=false \
+        --env INPUT_VERBOSE=true myimage

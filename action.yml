@@ -32,13 +32,11 @@ inputs:
     default: 'false'
 
 runs:
-  using: composite
-  steps:
-    - shell: bash
-      run: $GITHUB_ACTION_PATH/entrypoint.sh
-      env:
-        INPUT_IMAGE: ${{ inputs.image }}
-        INPUT_SOURCE_TAG: ${{ inputs.source_tag }}
-        INPUT_DEST_TAG: ${{ inputs.dest_tag }}
-        INPUT_VERBOSE: ${{ inputs.verbose }}
-        INPUT_DRY: ${{ inputs.dry }}
+  using: docker
+  image: Dockerfile
+  env:
+    INPUT_IMAGE: ${{ inputs.image }}
+    INPUT_SOURCE_TAG: ${{ inputs.source_tag }}
+    INPUT_DEST_TAG: ${{ inputs.dest_tag }}
+    INPUT_VERBOSE: ${{ inputs.verbose }}
+    INPUT_DRY: ${{ inputs.dry }}
