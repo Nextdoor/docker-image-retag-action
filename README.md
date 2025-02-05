@@ -45,13 +45,6 @@ jobs:
 
     - name: Retag Docker Image for Production
       uses: Nextdoor/docker-image-retag-action@main
-      
-      # If you are pushing an image to ECR, include AWS credentials in the
-      # environment. You do not need to set the `AWS_REGION` because that will be
-      # automatically picked up from the `image` value.
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
       with:
         # This is the image name in its fully qualified format. If you use an
