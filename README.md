@@ -44,7 +44,7 @@ jobs:
     - uses: actions/checkout@master
 
     # Logs into AWS/ECR
-    - uses: Nextdoor/.github/.github/actions/aws-login@main
+    - uses: Nextdoor/actions/aws-login@main
 
     - name: Retag Docker Image for Production
       uses: Nextdoor/docker-image-retag-action@main
