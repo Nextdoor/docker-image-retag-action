@@ -1,4 +1,4 @@
-FROM regclient/regsync:v0.3.9-alpine
+FROM 364942603424.dkr.ecr.us-west-2.amazonaws.com/vendor/regclient/regsync:release-v0.3.9-alpine
 
 # Change user to root for the purpose of doing our installs, and
 # the way Github Actions run we need to have access to write to

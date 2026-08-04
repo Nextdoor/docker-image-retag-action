@@ -40,6 +40,9 @@ on: [release]
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
     - uses: actions/checkout@master
 
@@ -87,9 +90,10 @@ push that image.
 
 ## Amazon ECR Credentials
 
-If your `image` value points to an AWS ECR repository, then the action will
-automatically log into AWS on your behalf. It expects that you will set the
-`AWS_ACCES_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables.
+The action image is pulled from private ECR, so every workflow must log in to
+ECR before invoking this action. Grant `id-token: write` and run
+`Nextdoor/actions/aws-login@main` in an earlier step. The action uses the AWS
+credentials from that login to access the source and destination ECR images.
 
 # Development Notes
 
