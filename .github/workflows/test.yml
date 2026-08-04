@@ -1,0 +1,27 @@
+name: Test
+
+on:
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: Nextdoor/actions/aws-login@main
+        with:
+          codeartifactNpm: false
+          codeartifactPip: false
+          codeartifactToken: false
+
+      - uses: ./
+        with:
+          image: 364942603424.dkr.ecr.us-west-2.amazonaws.com/vendor/regclient/regsync
+          source_tag: release-v0.3.9-alpine
+          dest_tag: release-v0.3.9-alpine
+          dry: true
